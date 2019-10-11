@@ -2,8 +2,14 @@
 
 import UIKit
 import CoreBluetooth
-let heartRateServiceCBUUID = CBUUID(string:"0x180D")
 
+let heartRateServiceCBUUID = CBUUID(string:"0x180D")
+let heartRateMeasurementCharacteristicCBUUID = CBUUID(string: "2A37")
+let bodySensorLocationCharacteristicCBUUID = CBUUID(string: "2A38")
+
+
+
+//MARK:
 
 class HRMViewController: UIViewController {
 
@@ -65,7 +71,7 @@ extension HRMViewController: CBCentralManagerDelegate{
   
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
     print("Connected!")
-    heartRatePeripheral.discoverServices(nil)
+    heartRatePeripheral.discoverServices([heartRateServiceCBUUID])
     
   }
   
@@ -76,12 +82,35 @@ extension HRMViewController: CBCentralManagerDelegate{
 /// Conform to CBPeripheralDelegate
 
 extension HRMViewController: CBPeripheralDelegate{
+  
   func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
     //peripheral object has a property which gives you a list of services
     guard let services = peripheral.services else {return}
     
     for service in services{
-      print(service)
+      //explicitly request the discovery of the service’s characteristics
+      peripheral.discoverCharacteristics(nil, for: service)
+      //Heart rate measurement is a characteristic of the heart rate service
+      print(service.characteristics ?? "characteristics are nil")
     }
   }
+  
+  func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+    guard let characteristics = service.characteristics else {return}
+    
+    for characteristic in characteristics{
+      print(characteristics)
+      //Checking a Characteristic’s Properties
+      if characteristic.properties.contains(.read){
+        print("\(characteristic.uuid):properties contains .read")
+      }
+      if characteristic.properties.contains(.notify){
+        print("\(characteristic.uuid):properties contains .notify")
+      }
+      
+    }
+    
+  }
+  
 }
+
